@@ -1,0 +1,17 @@
+node_modules
+dist
+coverage
+
+.env
+.env.local
+.env.*.local
+
+.DS_Store
+.vscode
+.idea
+
+client/node_modules
+client/dist
+
+server/node_modules
+server/dist

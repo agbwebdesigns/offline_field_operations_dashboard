@@ -1,0 +1,24 @@
+{
+  "name": "offline-field-operations-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "client:dev": "npm --prefix client run dev",
+    "server:dev": "npm --prefix server run dev",
+    "client:lint": "npm --prefix client run lint",
+    "server:lint": "npm --prefix server run lint",
+    "lint": "npm run client:lint && npm run server:lint",
+    "client:typecheck": "npm --prefix client run typecheck",
+    "server:typecheck": "npm --prefix server run typecheck",
+    "typecheck": "npm run client:typecheck && npm run server:typecheck",
+    "client:build": "npm --prefix client run build",
+    "server:build": "npm --prefix server run build",
+    "build": "npm run client:build && npm run server:build",
+    "client:format": "npm --prefix client run format",
+    "server:format": "npm --prefix server run format",
+    "format": "npm run client:format && npm run server:format",
+    "client:format:check": "npm --prefix client run format:check",
+    "server:format:check": "npm --prefix server run format:check",
+    "format:check": "npm run client:format:check && npm run server:format:check"
+  }
+}
