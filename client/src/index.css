@@ -539,3 +539,41 @@ textarea {
     transform: rotate(360deg);
   }
 }
+.toolbar {
+  grid-template-columns: 1fr 220px 220px auto;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: end;
+}
+
+.filter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background: #ffffff;
+  border: 1px solid #d8dee9;
+  border-radius: 18px;
+  color: #5b6475;
+}
+
+.filter-summary strong {
+  padding: 0.35rem 0.6rem;
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-actions {
+    align-items: stretch;
+  }
+}

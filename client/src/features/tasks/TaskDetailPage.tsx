@@ -49,7 +49,7 @@ export function TaskDetailPage() {
               <h3>Task Details</h3>
               <p>North Utility Building</p>
             </div>
-            <StatusBadge status="In Progress" />
+            <StatusBadge status="IN_PROGRESS" />
           </div>
 
           <div className="detail-list">
