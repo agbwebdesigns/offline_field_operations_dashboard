@@ -1,5 +1,5 @@
 import { apiRequest } from "../../shared/api/client";
-import type { TaskFilters, TaskListResponse } from "./types";
+import type { TaskDetailResponse, TaskFilters, TaskListResponse } from "./types";
 
 const buildTaskQueryString = (filters: TaskFilters) => {
   const params = new URLSearchParams();
@@ -25,4 +25,8 @@ export const getTasks = async (filters: TaskFilters = {}) => {
   const queryString = buildTaskQueryString(filters);
 
   return apiRequest<TaskListResponse>(`/tasks${queryString}`);
+};
+
+export const getTaskById = async (taskId: string) => {
+  return apiRequest<TaskDetailResponse>(`/tasks/${taskId}`);
 };

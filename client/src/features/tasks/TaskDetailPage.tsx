@@ -1,34 +1,85 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 
-import { Button } from "../../shared/components/Button";
+import { EmptyState } from "../../shared/components/EmptyState";
+import { ErrorState } from "../../shared/components/ErrorState";
+import { LoadingState } from "../../shared/components/LoadingState";
 import { PageHeader } from "../../shared/components/PageHeader";
 import { StatusBadge } from "../../shared/components/StatusBadge";
-
-const checklistItems = [
-  {
-    id: "item-001",
-    label: "Verify site access and safety conditions",
-    completed: true,
-  },
-  {
-    id: "item-002",
-    label: "Inspect equipment for visible damage",
-    completed: true,
-  },
-  {
-    id: "item-003",
-    label: "Record current operating status",
-    completed: false,
-  },
-  {
-    id: "item-004",
-    label: "Submit completion notes",
-    completed: false,
-  },
-];
+import { getTaskById } from "./api";
+import { formatDateTime, formatDueDate, formatPriority, formatUserRole } from "./formatters";
 
 export function TaskDetailPage() {
   const { taskId } = useParams();
+
+  const taskQuery = useQuery({
+    queryKey: ["task", taskId],
+    queryFn: () => getTaskById(taskId ?? ""),
+    enabled: Boolean(taskId),
+  });
+
+  if (!taskId) {
+    return (
+      <div className="page-stack">
+        <Link to="/tasks" className="back-link">
+          ← Back to tasks
+        </Link>
+
+        <EmptyState title="Task not found" message="No task id was provided in the URL." />
+      </div>
+    );
+  }
+
+  if (taskQuery.isLoading) {
+    return (
+      <div className="page-stack">
+        <Link to="/tasks" className="back-link">
+          ← Back to tasks
+        </Link>
+
+        <LoadingState message="Loading task details..." />
+      </div>
+    );
+  }
+
+  if (taskQuery.isError) {
+    return (
+      <div className="page-stack">
+        <Link to="/tasks" className="back-link">
+          ← Back to tasks
+        </Link>
+
+        <ErrorState
+          title="Unable to load task"
+          message={
+            taskQuery.error instanceof Error
+              ? taskQuery.error.message
+              : "The task details could not be loaded."
+          }
+          onRetry={() => void taskQuery.refetch()}
+        />
+      </div>
+    );
+  }
+
+  const task = taskQuery.data?.task;
+
+  if (!task) {
+    return (
+      <div className="page-stack">
+        <Link to="/tasks" className="back-link">
+          ← Back to tasks
+        </Link>
+
+        <EmptyState
+          title="Task not found"
+          message="This task may have been deleted or is no longer available."
+        />
+      </div>
+    );
+  }
+
+  const completedChecklistItems = task.checklistItems.filter((item) => item.completed).length;
 
   return (
     <div className="page-stack">
@@ -36,75 +87,100 @@ export function TaskDetailPage() {
         ← Back to tasks
       </Link>
 
-      <PageHeader
-        eyebrow={`Task ${taskId}`}
-        title="Inspect backup generator"
-        description="Complete the checklist, update the task status, and add field notes. Changes can be queued locally while offline."
-      />
+      <PageHeader eyebrow={`Task ${task.id}`} title={task.title} description={task.description} />
 
       <section className="detail-grid">
         <article className="card">
           <div className="card-header">
             <div>
               <h3>Task Details</h3>
-              <p>North Utility Building</p>
+              <p>{task.location ?? "No location assigned"}</p>
             </div>
-            <StatusBadge status="IN_PROGRESS" />
+            <StatusBadge status={task.status} />
           </div>
 
           <div className="detail-list">
             <div>
               <span>Priority</span>
-              <strong>High</strong>
+              <strong>{formatPriority(task.priority)}</strong>
             </div>
+
             <div>
               <span>Due</span>
-              <strong>Today</strong>
+              <strong>{formatDueDate(task.dueDate)}</strong>
             </div>
+
             <div>
               <span>Assigned to</span>
-              <strong>Field User</strong>
+              <strong>{task.assignedTo?.name ?? "Unassigned"}</strong>
             </div>
+
+            <div>
+              <span>Created by</span>
+              <strong>{task.createdBy.name}</strong>
+            </div>
+
             <div>
               <span>Server version</span>
-              <strong>v4</strong>
+              <strong>v{task.version}</strong>
+            </div>
+
+            <div>
+              <span>Last updated</span>
+              <strong>{formatDateTime(task.updatedAt)}</strong>
             </div>
           </div>
 
-          <label>
-            Status
-            <select defaultValue="in-progress">
-              <option value="todo">Todo</option>
-              <option value="in-progress">In Progress</option>
-              <option value="blocked">Blocked</option>
-              <option value="completed">Completed</option>
-            </select>
-          </label>
+          {task.assignedTo ? (
+            <div className="person-card">
+              <span>Assigned user</span>
+              <strong>{task.assignedTo.name}</strong>
+              <p>
+                {task.assignedTo.email} · {formatUserRole(task.assignedTo.role)}
+              </p>
+            </div>
+          ) : null}
 
           <div className="button-row">
-            <Button type="button">Save Status</Button>
-            <Button type="button" variant="secondary">
+            <button className="button button-primary" type="button" disabled>
+              Save Status
+            </button>
+            <button className="button button-secondary" type="button" disabled>
               Queue Offline Change
-            </Button>
+            </button>
           </div>
+
+          <p className="helper-text">
+            Editing is intentionally disabled in this milestone. The next phase will add status,
+            checklist, and note mutations.
+          </p>
         </article>
 
         <article className="card">
           <div className="card-header">
             <div>
               <h3>Checklist</h3>
-              <p>2 of 4 items completed</p>
+              <p>
+                {completedChecklistItems} of {task.checklistItems.length} items completed
+              </p>
             </div>
           </div>
 
-          <div className="checklist">
-            {checklistItems.map((item) => (
-              <label key={item.id} className="checklist-item">
-                <input type="checkbox" defaultChecked={item.completed} />
-                <span>{item.label}</span>
-              </label>
-            ))}
-          </div>
+          {task.checklistItems.length > 0 ? (
+            <div className="checklist">
+              {task.checklistItems.map((item) => (
+                <label key={item.id} className="checklist-item">
+                  <input type="checkbox" checked={item.completed} readOnly />
+                  <span>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No checklist items"
+              message="This task does not have checklist items yet."
+            />
+          )}
         </article>
 
         <article className="card notes-card">
@@ -115,19 +191,30 @@ export function TaskDetailPage() {
             </div>
           </div>
 
-          <div className="note-list">
-            <div className="note">
-              <strong>Field User</strong>
-              <p>Generator enclosure was accessible. No external damage found.</p>
+          {task.notes.length > 0 ? (
+            <div className="note-list">
+              {task.notes.map((note) => (
+                <div key={note.id} className="note">
+                  <div className="note-header">
+                    <strong>{note.author.name}</strong>
+                    <span>{formatDateTime(note.createdAt)}</span>
+                  </div>
+                  <p>{note.body}</p>
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            <EmptyState title="No notes yet" message="No field notes have been added." />
+          )}
 
           <label>
             Add note
-            <textarea placeholder="Add a field note..." rows={4} />
+            <textarea placeholder="Add a field note..." rows={4} disabled />
           </label>
 
-          <Button type="button">Add Note</Button>
+          <button className="button button-primary" type="button" disabled>
+            Add Note
+          </button>
         </article>
 
         <article className="card conflict-card">
@@ -140,10 +227,11 @@ export function TaskDetailPage() {
 
           <div className="sync-preview">
             <p>
-              <strong>Pending queue:</strong> 1 local change
+              <strong>Pending queue:</strong> No pending local changes
             </p>
             <p>
-              <strong>Conflict detection:</strong> compares client version to server version
+              <strong>Conflict detection:</strong> Client changes will compare against server
+              version v{task.version}
             </p>
           </div>
         </article>

@@ -33,3 +33,47 @@ export type TaskFilters = {
   status?: TaskStatus;
   priority?: Priority;
 };
+export type TaskUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "ADMIN" | "MANAGER" | "FIELD_USER";
+};
+
+export type ChecklistItem = {
+  id: string;
+  label: string;
+  completed: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TaskNote = {
+  id: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  author: TaskUser;
+};
+
+export type TaskDetail = {
+  id: string;
+  title: string;
+  description: string;
+  location: string | null;
+  status: TaskStatus;
+  priority: Priority;
+  dueDate: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  assignedTo: TaskUser | null;
+  createdBy: TaskUser;
+  checklistItems: ChecklistItem[];
+  notes: TaskNote[];
+};
+
+export type TaskDetailResponse = {
+  task: TaskDetail;
+};

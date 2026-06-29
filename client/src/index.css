@@ -577,3 +577,40 @@ textarea {
     align-items: stretch;
   }
 }
+
+.person-card {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem;
+  margin-top: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.person-card span {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.person-card p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.helper-text {
+  margin: 0.85rem 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+
+.note-header span {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
