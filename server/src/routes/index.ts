@@ -1,9 +1,9 @@
 import { Router } from "express";
 
-import { authRouter } from "./auth.routes.js";
-import { syncRouter } from "./sync.routes.js";
-import { taskRouter } from "./task.routes.js";
-import { userRouter } from "./user.routes.js";
+import { authRouter } from "../features/auth/auth.routes.js";
+import { syncRouter } from "../features/sync/sync.routes.js";
+import { taskRouter } from "../features/tasks/task.routes.js";
+import { userRouter } from "../features/users/user.routes.js";
 
 export const apiRouter = Router();
 
