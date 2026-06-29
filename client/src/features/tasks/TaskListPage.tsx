@@ -1,44 +1,27 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
+import { EmptyState } from "../../shared/components/EmptyState";
+import { ErrorState } from "../../shared/components/ErrorState";
+import { LoadingState } from "../../shared/components/LoadingState";
 import { PageHeader } from "../../shared/components/PageHeader";
 import { StatusBadge } from "../../shared/components/StatusBadge";
+import { getTasks } from "./api";
+import { formatDueDate, formatPriority } from "./formatters";
+import type { Priority, TaskStatus } from "./types";
 
-const tasks = [
-  {
-    id: "task-001",
-    title: "Inspect backup generator",
-    location: "North Utility Building",
-    priority: "High",
-    status: "In Progress" as const,
-    dueDate: "Today",
-  },
-  {
-    id: "task-002",
-    title: "Verify pump station pressure",
-    location: "Pump Station 3",
-    priority: "Critical",
-    status: "Blocked" as const,
-    dueDate: "Tomorrow",
-  },
-  {
-    id: "task-003",
-    title: "Replace damaged access panel",
-    location: "West Service Corridor",
-    priority: "Medium",
-    status: "Todo" as const,
-    dueDate: "Friday",
-  },
-  {
-    id: "task-004",
-    title: "Document utility room water leak",
-    location: "Basement Utility Room",
-    priority: "High",
-    status: "Pending Sync" as const,
-    dueDate: "Today",
-  },
-];
+const defaultFilters: {
+  q?: string;
+  status?: TaskStatus;
+  priority?: Priority;
+} = {};
 
 export function TaskListPage() {
+  const tasksQuery = useQuery({
+    queryKey: ["tasks", defaultFilters],
+    queryFn: () => getTasks(defaultFilters),
+  });
+
   return (
     <div className="page-stack">
       <PageHeader
@@ -50,57 +33,80 @@ export function TaskListPage() {
       <section className="toolbar" aria-label="Task filters">
         <label>
           Search
-          <input type="search" placeholder="Search tasks..." />
+          <input type="search" placeholder="Search tasks..." disabled />
         </label>
 
         <label>
           Status
-          <select defaultValue="">
+          <select defaultValue="" disabled>
             <option value="">All statuses</option>
-            <option value="todo">Todo</option>
-            <option value="in-progress">In Progress</option>
-            <option value="blocked">Blocked</option>
-            <option value="completed">Completed</option>
+            <option value="TODO">Todo</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="BLOCKED">Blocked</option>
+            <option value="COMPLETED">Completed</option>
           </select>
         </label>
 
         <label>
           Priority
-          <select defaultValue="">
+          <select defaultValue="" disabled>
             <option value="">All priorities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
           </select>
         </label>
       </section>
 
-      <section className="card">
-        <div className="card-header">
-          <div>
-            <h3>Task Queue</h3>
-            <p>{tasks.length} active tasks</p>
+      {tasksQuery.isLoading ? <LoadingState message="Loading field tasks..." /> : null}
+
+      {tasksQuery.isError ? (
+        <ErrorState
+          message={
+            tasksQuery.error instanceof Error ? tasksQuery.error.message : "Unable to load tasks."
+          }
+          onRetry={() => void tasksQuery.refetch()}
+        />
+      ) : null}
+
+      {tasksQuery.isSuccess && tasksQuery.data.tasks.length === 0 ? (
+        <EmptyState
+          title="No tasks found"
+          message="There are no field tasks matching the current filters."
+        />
+      ) : null}
+
+      {tasksQuery.isSuccess && tasksQuery.data.tasks.length > 0 ? (
+        <section className="card">
+          <div className="card-header">
+            <div>
+              <h3>Task Queue</h3>
+              <p>{tasksQuery.data.tasks.length} active tasks</p>
+            </div>
           </div>
-        </div>
 
-        <div className="task-list">
-          {tasks.map((task) => (
-            <Link key={task.id} to={`/tasks/${task.id}`} className="task-row">
-              <div>
-                <h4>{task.title}</h4>
-                <p>{task.location}</p>
-              </div>
+          <div className="task-list">
+            {tasksQuery.data.tasks.map((task) => (
+              <Link key={task.id} to={`/tasks/${task.id}`} className="task-row">
+                <div>
+                  <h4>{task.title}</h4>
+                  <p>{task.location ?? "No location assigned"}</p>
+                  <p>
+                    Checklist: {task.checklistSummary.completed}/{task.checklistSummary.total}
+                  </p>
+                </div>
 
-              <div className="task-meta">
-                <span>{task.priority}</span>
-                <span>{task.dueDate}</span>
-                <StatusBadge status={task.status} />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+                <div className="task-meta">
+                  <span>{formatPriority(task.priority)}</span>
+                  <span>{formatDueDate(task.dueDate)}</span>
+                  <StatusBadge status={task.status} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

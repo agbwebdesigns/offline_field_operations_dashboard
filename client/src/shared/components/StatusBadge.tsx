@@ -1,9 +1,13 @@
+import type { TaskStatus } from "../../features/tasks/types";
+import { formatTaskStatus } from "../../features/tasks/formatters";
+
 type StatusBadgeProps = {
-  status: "Todo" | "In Progress" | "Blocked" | "Completed" | "Pending Sync";
+  status: TaskStatus | "PENDING_SYNC";
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const className = status.toLowerCase().replaceAll(" ", "-");
+  const label = status === "PENDING_SYNC" ? "Pending Sync" : formatTaskStatus(status);
+  const className = label.toLowerCase().replaceAll(" ", "-");
 
-  return <span className={`status-badge status-${className}`}>{status}</span>;
+  return <span className={`status-badge status-${className}`}>{label}</span>;
 }
