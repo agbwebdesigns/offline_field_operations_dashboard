@@ -20,5 +20,9 @@
     "client:format:check": "npm --prefix client run format:check",
     "server:format:check": "npm --prefix server run format:check",
     "format:check": "npm run client:format:check && npm run server:format:check"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.8.0",
+    "prisma": "^7.8.0"
   }
 }

@@ -11,23 +11,34 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset"
   },
   "keywords": [],
   "author": "Adam Bennett",
   "license": "ISC",
   "dependencies": {
     "@eslint/js": "^10.0.1",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "morgan": "^1.11.0"
+    "morgan": "^1.11.0",
+    "pg": "^8.22.0",
+    "prisma": "^7.8.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.0.1",
+    "@types/pg": "^8.20.0",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.1",

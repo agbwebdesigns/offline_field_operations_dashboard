@@ -1,12 +1,12 @@
-const requiredEnv = (key: string): string => {
-  const value = process.env[key];
+// const requiredEnv = (key: string): string => {
+//   const value = process.env[key];
 
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
+//   if (!value) {
+//     throw new Error(`Missing required environment variable: ${key}`);
+//   }
 
-  return value;
-};
+//   return value;
+// };
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV ?? "development",

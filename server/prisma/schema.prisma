@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  FIELD_USER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+
+  assignedTasks Task[] @relation("AssignedTasks")
+  createdTasks  Task[] @relation("CreatedTasks")
+  notes         Note[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  location    String?
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+
+  assignedToId String?
+  assignedTo   User? @relation("AssignedTasks", fields: [assignedToId], references: [id])
+
+  createdById String
+  createdBy   User @relation("CreatedTasks", fields: [createdById], references: [id])
+
+  dueDate DateTime?
+  version Int      @default(1)
+
+  checklistItems ChecklistItem[]
+  notes          Note[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([priority])
+  @@index([assignedToId])
+  @@index([createdById])
+}
+
+model ChecklistItem {
+  id        String @id @default(cuid())
+  taskId    String
+  task      Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  label     String
+  completed Boolean @default(false)
+  order     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+}
+
+model Note {
+  id     String @id @default(cuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  body String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([authorId])
+}
