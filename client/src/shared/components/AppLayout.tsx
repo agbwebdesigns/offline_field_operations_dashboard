@@ -1,11 +1,22 @@
 import type { ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+
+import { authStorage } from "../../features/auth/authStorage";
+import { Button } from "./Button";
 
 type AppLayoutProps = {
   children: ReactNode;
 };
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const navigate = useNavigate();
+  const user = authStorage.getUser();
+
+  const logout = () => {
+    authStorage.clear();
+    navigate("/login");
+  };
+
   return (
     <div className="app-shell">
       <aside className="sidebar" aria-label="Primary navigation">
@@ -19,8 +30,18 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         <nav className="nav-links">
           <NavLink to="/tasks">Tasks</NavLink>
-          <NavLink to="/login">Login</NavLink>
         </nav>
+
+        {user ? (
+          <div className="sidebar-user">
+            <span>Signed in as</span>
+            <strong>{user.name}</strong>
+            <small>{user.role.replaceAll("_", " ")}</small>
+            <Button type="button" variant="secondary" onClick={logout}>
+              Log out
+            </Button>
+          </div>
+        ) : null}
       </aside>
 
       <div className="main-shell">

@@ -2,13 +2,18 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 
 import { App } from "./App";
 import { LoginPage } from "../features/auth/LoginPage";
+import { RequireAuth } from "../features/auth/RequireAuth";
 import { TaskDetailPage } from "../features/tasks/TaskDetailPage";
 import { TaskListPage } from "../features/tasks/TaskListPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: (
+      <RequireAuth>
+        <App />
+      </RequireAuth>
+    ),
     children: [
       {
         index: true,

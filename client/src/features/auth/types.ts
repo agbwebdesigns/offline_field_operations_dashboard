@@ -7,9 +7,16 @@ export type AuthUser = {
   role: UserRole;
 };
 
-export type JwtPayload = {
-  sub: string;
+export type LoginResponse = {
+  user: AuthUser;
+  token: string;
+};
+
+export type CurrentUserResponse = {
+  user: AuthUser;
+};
+
+export type LoginInput = {
   email: string;
-  name: string;
-  role: UserRole;
+  password: string;
 };

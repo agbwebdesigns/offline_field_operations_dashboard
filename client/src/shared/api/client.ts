@@ -16,17 +16,22 @@ export class ApiError extends Error {
   }
 }
 
+const getStoredToken = () => {
+  return localStorage.getItem("offline-field-ops-token");
+};
+
 export async function apiRequest<TResponse>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<TResponse> {
   const { token, headers, ...fetchOptions } = options;
+  const authToken = token ?? getStoredToken();
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...fetchOptions,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...headers,
     },
   });
