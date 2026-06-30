@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import type { AuthUser } from "../../types/auth.js";
 
 import type { PriorityFilter, TaskListQuery, TaskStatusFilter } from "./task.types.js";
 
@@ -14,8 +15,11 @@ export const isValidPriority = (priority: string): priority is PriorityFilter =>
   return validPriorities.includes(priority as PriorityFilter);
 };
 
-export const getTasks = async (query: TaskListQuery) => {
+export const getTasks = async (query: TaskListQuery, user: AuthUser) => {
+  const roleVisibilityWhere = getTaskVisibilityWhere(user);
+
   const where = {
+    ...roleVisibilityWhere,
     ...(query.status ? { status: query.status } : {}),
     ...(query.priority ? { priority: query.priority } : {}),
     ...(query.q
@@ -103,10 +107,13 @@ export const getTasks = async (query: TaskListQuery) => {
   });
 };
 
-export const getTaskById = async (taskId: string) => {
-  return prisma.task.findUnique({
+export const getTaskById = async (taskId: string, user: AuthUser) => {
+  const roleVisibilityWhere = getTaskVisibilityWhere(user);
+
+  return prisma.task.findFirst({
     where: {
       id: taskId,
+      ...roleVisibilityWhere,
     },
     select: {
       id: true,
@@ -169,4 +176,20 @@ export const getTaskById = async (taskId: string) => {
       },
     },
   });
+};
+
+const getTaskVisibilityWhere = (user: AuthUser) => {
+  if (user.role === "ADMIN") {
+    return {};
+  }
+
+  if (user.role === "MANAGER") {
+    return {
+      createdById: user.id,
+    };
+  }
+
+  return {
+    assignedToId: user.id,
+  };
 };

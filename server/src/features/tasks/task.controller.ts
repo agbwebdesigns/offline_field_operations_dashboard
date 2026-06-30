@@ -38,7 +38,14 @@ export const listTasks = async (req: Request, res: Response) => {
     query.priority = priorityParam;
   }
 
-  const tasks = await getTasks(query);
+  if (!req.user) {
+    res.status(401).json({
+      message: "Authentication required",
+    });
+    return;
+  }
+
+  const tasks = await getTasks(query, req.user);
 
   res.json({
     tasks,
@@ -55,7 +62,14 @@ export const getTaskDetail = async (req: Request, res: Response) => {
     return;
   }
 
-  const task = await getTaskById(taskId);
+  if (!req.user) {
+    res.status(401).json({
+      message: "Authentication required",
+    });
+    return;
+  }
+
+  const task = await getTaskById(taskId, req.user);
 
   if (!task) {
     res.status(404).json({

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { authStorage } from "../../features/auth/authStorage";
 import { Button } from "./Button";
@@ -8,12 +9,21 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
+const formatRole = (role: string) => {
+  return role
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
 export function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate();
   const user = authStorage.getUser();
+  const queryClient = useQueryClient();
 
   const logout = () => {
     authStorage.clear();
+    queryClient.clear();
     navigate("/login");
   };
 
@@ -36,7 +46,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <div className="sidebar-user">
             <span>Signed in as</span>
             <strong>{user.name}</strong>
-            <small>{user.role.replaceAll("_", " ")}</small>
+            <small>{formatRole(user.role)}</small>
             <Button type="button" variant="secondary" onClick={logout}>
               Log out
             </Button>

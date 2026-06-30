@@ -36,7 +36,7 @@ export function LoginPage() {
       authStorage.setToken(data.token);
       authStorage.setUser(data.user);
 
-      await queryClient.invalidateQueries();
+      queryClient.clear();
 
       navigate("/tasks");
     },
