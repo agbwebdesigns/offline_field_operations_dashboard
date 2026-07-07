@@ -193,3 +193,165 @@ const getTaskVisibilityWhere = (user: AuthUser) => {
     assignedToId: user.id,
   };
 };
+
+export const userCanAccessTask = async (taskId: string, user: AuthUser) => {
+  const roleVisibilityWhere = getTaskVisibilityWhere(user);
+
+  const task = await prisma.task.findFirst({
+    where: {
+      id: taskId,
+      ...roleVisibilityWhere,
+    },
+    select: {
+      id: true,
+      version: true,
+    },
+  });
+
+  return task;
+};
+
+export const updateTaskStatus = async (
+  taskId: string,
+  user: AuthUser,
+  status: TaskStatusFilter,
+) => {
+  const task = await userCanAccessTask(taskId, user);
+
+  if (!task) {
+    return null;
+  }
+
+  return prisma.task.update({
+    where: {
+      id: taskId,
+    },
+    data: {
+      status,
+      version: {
+        increment: 1,
+      },
+    },
+    select: {
+      id: true,
+      status: true,
+      version: true,
+      updatedAt: true,
+    },
+  });
+};
+
+export const updateChecklistItem = async (
+  taskId: string,
+  itemId: string,
+  user: AuthUser,
+  completed: boolean,
+) => {
+  const task = await userCanAccessTask(taskId, user);
+
+  if (!task) {
+    return null;
+  }
+
+  const checklistItem = await prisma.checklistItem.findFirst({
+    where: {
+      id: itemId,
+      taskId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!checklistItem) {
+    return null;
+  }
+
+  const [updatedItem, updatedTask] = await prisma.$transaction([
+    prisma.checklistItem.update({
+      where: {
+        id: itemId,
+      },
+      data: {
+        completed,
+      },
+      select: {
+        id: true,
+        completed: true,
+        updatedAt: true,
+      },
+    }),
+    prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        version: {
+          increment: 1,
+        },
+      },
+      select: {
+        id: true,
+        version: true,
+        updatedAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    checklistItem: updatedItem,
+    task: updatedTask,
+  };
+};
+
+export const createTaskNote = async (taskId: string, user: AuthUser, body: string) => {
+  const task = await userCanAccessTask(taskId, user);
+
+  if (!task) {
+    return null;
+  }
+
+  const [note, updatedTask] = await prisma.$transaction([
+    prisma.note.create({
+      data: {
+        taskId,
+        authorId: user.id,
+        body,
+      },
+      select: {
+        id: true,
+        body: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    }),
+    prisma.task.update({
+      where: {
+        id: taskId,
+      },
+      data: {
+        version: {
+          increment: 1,
+        },
+      },
+      select: {
+        id: true,
+        version: true,
+        updatedAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    note,
+    task: updatedTask,
+  };
+};

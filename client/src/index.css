@@ -638,3 +638,15 @@ textarea {
   color: #b91c1c;
   font-weight: 700;
 }
+
+.form-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.form-footer span {
+  color: #6b7280;
+  font-size: 0.85rem;
+}

@@ -1,5 +1,15 @@
 import { apiRequest } from "../../shared/api/client";
-import type { TaskDetailResponse, TaskFilters, TaskListResponse } from "./types";
+import type {
+  CreateTaskNoteInput,
+  CreateTaskNoteResponse,
+  TaskDetailResponse,
+  TaskFilters,
+  TaskListResponse,
+  UpdateChecklistItemInput,
+  UpdateChecklistItemResponse,
+  UpdateTaskStatusInput,
+  UpdateTaskStatusResponse,
+} from "./types";
 
 const buildTaskQueryString = (filters: TaskFilters) => {
   const params = new URLSearchParams();
@@ -29,4 +39,35 @@ export const getTasks = async (filters: TaskFilters = {}) => {
 
 export const getTaskById = async (taskId: string) => {
   return apiRequest<TaskDetailResponse>(`/tasks/${taskId}`);
+};
+
+export const updateTaskStatus = async ({ taskId, status }: UpdateTaskStatusInput) => {
+  return apiRequest<UpdateTaskStatusResponse>(`/tasks/${taskId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      status,
+    }),
+  });
+};
+
+export const updateChecklistItem = async ({
+  taskId,
+  itemId,
+  completed,
+}: UpdateChecklistItemInput) => {
+  return apiRequest<UpdateChecklistItemResponse>(`/tasks/${taskId}/checklist/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      completed,
+    }),
+  });
+};
+
+export const createTaskNote = async ({ taskId, body }: CreateTaskNoteInput) => {
+  return apiRequest<CreateTaskNoteResponse>(`/tasks/${taskId}/notes`, {
+    method: "POST",
+    body: JSON.stringify({
+      body,
+    }),
+  });
 };

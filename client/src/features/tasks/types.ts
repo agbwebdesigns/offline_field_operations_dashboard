@@ -77,3 +77,50 @@ export type TaskDetail = {
 export type TaskDetailResponse = {
   task: TaskDetail;
 };
+
+export type UpdateTaskStatusInput = {
+  taskId: string;
+  status: TaskStatus;
+};
+
+export type UpdateTaskStatusResponse = {
+  task: {
+    id: string;
+    status: TaskStatus;
+    version: number;
+    updatedAt: string;
+  };
+};
+
+export type UpdateChecklistItemInput = {
+  taskId: string;
+  itemId: string;
+  completed: boolean;
+};
+
+export type UpdateChecklistItemResponse = {
+  checklistItem: {
+    id: string;
+    completed: boolean;
+    updatedAt: string;
+  };
+  task: {
+    id: string;
+    version: number;
+    updatedAt: string;
+  };
+};
+
+export type CreateTaskNoteInput = {
+  taskId: string;
+  body: string;
+};
+
+export type CreateTaskNoteResponse = {
+  note: TaskNote;
+  task: {
+    id: string;
+    version: number;
+    updatedAt: string;
+  };
+};
