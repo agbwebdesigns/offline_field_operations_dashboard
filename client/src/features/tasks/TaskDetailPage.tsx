@@ -10,6 +10,9 @@ import { PageHeader } from "../../shared/components/PageHeader";
 import { StatusBadge } from "../../shared/components/StatusBadge";
 import { createTaskNote, getTaskById, updateChecklistItem, updateTaskStatus } from "./api";
 import { formatDateTime, formatDueDate, formatPriority, formatUserRole } from "./formatters";
+import { offlineQueueStorage } from "../offline/offlineQueueStorage";
+import { notifyOfflineQueueChanged } from "../offline/useOfflineQueue";
+import { useOnlineStatus } from "../offline/useOnlineStatus";
 import type { TaskStatus } from "./types";
 
 export function TaskDetailPage() {
@@ -18,12 +21,7 @@ export function TaskDetailPage() {
 
   const queryClient = useQueryClient();
   const [noteBody, setNoteBody] = useState("");
-
-  const taskQuery = useQuery({
-    queryKey: ["task", taskId],
-    queryFn: () => getTaskById(taskId ?? ""),
-    enabled: Boolean(taskId),
-  });
+  const isOnline = useOnlineStatus();
 
   const refreshTask = async () => {
     await queryClient.invalidateQueries({
@@ -34,6 +32,27 @@ export function TaskDetailPage() {
       queryKey: ["tasks"],
     });
   };
+
+  const queueOfflineChange = (mutation: Parameters<typeof offlineQueueStorage.add>[0]) => {
+    offlineQueueStorage.add(mutation);
+    notifyOfflineQueueChanged();
+  };
+
+  const taskQuery = useQuery({
+    queryKey: ["task", taskId],
+    queryFn: () => getTaskById(taskId ?? ""),
+    enabled: Boolean(taskId),
+  });
+
+  // const refreshTask = async () => {
+  //   await queryClient.invalidateQueries({
+  //     queryKey: ["task", taskId],
+  //   });
+
+  //   await queryClient.invalidateQueries({
+  //     queryKey: ["tasks"],
+  //   });
+  // };
 
   const statusMutation = useMutation({
     mutationFn: updateTaskStatus,
@@ -202,10 +221,37 @@ export function TaskDetailPage() {
                   return;
                 }
 
-                statusMutation.mutate({
-                  taskId,
-                  status: selectedStatus,
-                });
+                if (!isOnline) {
+                  queueOfflineChange({
+                    type: "UPDATE_TASK_STATUS",
+                    payload: {
+                      taskId,
+                      status: selectedStatus,
+                    },
+                  });
+
+                  setDraftStatus(null);
+                  return;
+                }
+
+                statusMutation.mutate(
+                  {
+                    taskId,
+                    status: selectedStatus,
+                  },
+                  {
+                    onError: () => {
+                      queueOfflineChange({
+                        type: "UPDATE_TASK_STATUS",
+                        payload: {
+                          taskId,
+                          status: selectedStatus,
+                        },
+                      });
+                      setDraftStatus(null);
+                    },
+                  },
+                );
               }}
               disabled={statusMutation.isPending || selectedStatus === task.status}
             >
@@ -254,15 +300,44 @@ export function TaskDetailPage() {
                     checked={item.completed}
                     disabled={checklistMutation.isPending}
                     onChange={(event) => {
+                      const completed = event.target.checked;
+
                       if (!taskId) {
                         return;
                       }
 
-                      checklistMutation.mutate({
-                        taskId,
-                        itemId: item.id,
-                        completed: event.target.checked,
-                      });
+                      if (!isOnline) {
+                        queueOfflineChange({
+                          type: "UPDATE_CHECKLIST_ITEM",
+                          payload: {
+                            taskId,
+                            itemId: item.id,
+                            completed,
+                          },
+                        });
+
+                        return;
+                      }
+
+                      checklistMutation.mutate(
+                        {
+                          taskId,
+                          itemId: item.id,
+                          completed,
+                        },
+                        {
+                          onError: () => {
+                            queueOfflineChange({
+                              type: "UPDATE_CHECKLIST_ITEM",
+                              payload: {
+                                taskId,
+                                itemId: item.id,
+                                completed,
+                              },
+                            });
+                          },
+                        },
+                      );
                     }}
                   />
                   {checklistMutation.isError ? (
@@ -317,10 +392,40 @@ export function TaskDetailPage() {
                 return;
               }
 
-              noteMutation.mutate({
-                taskId,
-                body: noteBody.trim(),
-              });
+              const body = noteBody.trim();
+
+              if (!isOnline) {
+                queueOfflineChange({
+                  type: "CREATE_TASK_NOTE",
+                  payload: {
+                    taskId,
+                    body,
+                  },
+                });
+
+                setNoteBody("");
+                return;
+              }
+
+              noteMutation.mutate(
+                {
+                  taskId,
+                  body,
+                },
+                {
+                  onError: () => {
+                    queueOfflineChange({
+                      type: "CREATE_TASK_NOTE",
+                      payload: {
+                        taskId,
+                        body,
+                      },
+                    });
+
+                    setNoteBody("");
+                  },
+                },
+              );
             }}
           >
             <label>

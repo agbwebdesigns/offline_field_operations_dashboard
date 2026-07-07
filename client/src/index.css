@@ -650,3 +650,32 @@ textarea {
   color: #6b7280;
   font-size: 0.85rem;
 }
+
+.connection-pill-offline {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.offline-panel {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 14px;
+}
+
+.offline-panel span,
+.offline-panel small {
+  color: #9ca3af;
+}
+
+.offline-panel strong {
+  color: #ffffff;
+  font-size: 1.6rem;
+}
+
+.sync-error {
+  color: #fecaca !important;
+}
