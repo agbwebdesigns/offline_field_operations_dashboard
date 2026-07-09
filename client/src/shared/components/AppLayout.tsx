@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOfflineQueue } from "../../features/offline/useOfflineQueue";
@@ -19,6 +20,8 @@ const formatRole = (role: string) => {
 };
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const [lastConflictCount, setLastConflictCount] = useState(0);
+
   const navigate = useNavigate();
   const user = authStorage.getUser();
   const queryClient = useQueryClient();
@@ -34,7 +37,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const syncMutation = useMutation({
     mutationFn: syncOfflineQueue,
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      setLastConflictCount(result.conflictCount);
       await queryClient.invalidateQueries();
     },
   });
@@ -69,6 +73,13 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {syncMutation.isError ? (
             <small className="sync-error">Some changes could not sync.</small>
+          ) : null}
+
+          {lastConflictCount > 0 ? (
+            <small className="sync-warning">
+              {lastConflictCount} change{lastConflictCount === 1 ? "" : "s"} had a version conflict
+              and were not applied.
+            </small>
           ) : null}
         </div>
 

@@ -11,6 +11,7 @@ export type OfflineMutation =
       payload: {
         taskId: string;
         status: TaskStatus;
+        expectedVersion: number;
       };
     }
   | {
@@ -21,6 +22,7 @@ export type OfflineMutation =
         taskId: string;
         itemId: string;
         completed: boolean;
+        expectedVersion: number;
       };
     }
   | {
@@ -30,5 +32,6 @@ export type OfflineMutation =
       payload: {
         taskId: string;
         body: string;
+        expectedVersion: number;
       };
     };

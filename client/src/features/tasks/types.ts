@@ -81,6 +81,7 @@ export type TaskDetailResponse = {
 export type UpdateTaskStatusInput = {
   taskId: string;
   status: TaskStatus;
+  expectedVersion: number;
 };
 
 export type UpdateTaskStatusResponse = {
@@ -96,6 +97,7 @@ export type UpdateChecklistItemInput = {
   taskId: string;
   itemId: string;
   completed: boolean;
+  expectedVersion: number;
 };
 
 export type UpdateChecklistItemResponse = {
@@ -114,6 +116,7 @@ export type UpdateChecklistItemResponse = {
 export type CreateTaskNoteInput = {
   taskId: string;
   body: string;
+  expectedVersion: number;
 };
 
 export type CreateTaskNoteResponse = {
@@ -123,4 +126,10 @@ export type CreateTaskNoteResponse = {
     version: number;
     updatedAt: string;
   };
+};
+
+export type VersionConflictResponse = {
+  message: string;
+  code: "VERSION_CONFLICT";
+  serverTask: TaskDetail | null;
 };

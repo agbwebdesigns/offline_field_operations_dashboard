@@ -679,3 +679,7 @@ textarea {
 .sync-error {
   color: #fecaca !important;
 }
+
+.sync-warning {
+  color: #fde68a !important;
+}

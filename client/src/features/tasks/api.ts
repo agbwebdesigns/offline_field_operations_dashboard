@@ -41,11 +41,16 @@ export const getTaskById = async (taskId: string) => {
   return apiRequest<TaskDetailResponse>(`/tasks/${taskId}`);
 };
 
-export const updateTaskStatus = async ({ taskId, status }: UpdateTaskStatusInput) => {
+export const updateTaskStatus = async ({
+  taskId,
+  status,
+  expectedVersion,
+}: UpdateTaskStatusInput) => {
   return apiRequest<UpdateTaskStatusResponse>(`/tasks/${taskId}/status`, {
     method: "PATCH",
     body: JSON.stringify({
       status,
+      expectedVersion,
     }),
   });
 };
@@ -54,20 +59,23 @@ export const updateChecklistItem = async ({
   taskId,
   itemId,
   completed,
+  expectedVersion,
 }: UpdateChecklistItemInput) => {
   return apiRequest<UpdateChecklistItemResponse>(`/tasks/${taskId}/checklist/${itemId}`, {
     method: "PATCH",
     body: JSON.stringify({
       completed,
+      expectedVersion,
     }),
   });
 };
 
-export const createTaskNote = async ({ taskId, body }: CreateTaskNoteInput) => {
+export const createTaskNote = async ({ taskId, body, expectedVersion }: CreateTaskNoteInput) => {
   return apiRequest<CreateTaskNoteResponse>(`/tasks/${taskId}/notes`, {
     method: "POST",
     body: JSON.stringify({
       body,
+      expectedVersion,
     }),
   });
 };

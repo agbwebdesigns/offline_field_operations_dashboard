@@ -194,6 +194,28 @@ const getTaskVisibilityWhere = (user: AuthUser) => {
   };
 };
 
+const createConflictResult = async (taskId: string, user: AuthUser) => {
+  const serverTask = await getTaskById(taskId, user);
+
+  return {
+    conflict: true as const,
+    serverTask,
+  };
+};
+
+const createNotFoundResult = () => {
+  return {
+    notFound: true as const,
+  };
+};
+
+const createSuccessResult = <TData>(data: TData) => {
+  return {
+    success: true as const,
+    data,
+  };
+};
+
 export const userCanAccessTask = async (taskId: string, user: AuthUser) => {
   const roleVisibilityWhere = getTaskVisibilityWhere(user);
 
@@ -215,14 +237,19 @@ export const updateTaskStatus = async (
   taskId: string,
   user: AuthUser,
   status: TaskStatusFilter,
+  expectedVersion: number,
 ) => {
   const task = await userCanAccessTask(taskId, user);
 
   if (!task) {
-    return null;
+    return createNotFoundResult();
   }
 
-  return prisma.task.update({
+  if (task.version !== expectedVersion) {
+    return createConflictResult(taskId, user);
+  }
+
+  const updatedTask = await prisma.task.update({
     where: {
       id: taskId,
     },
@@ -239,6 +266,10 @@ export const updateTaskStatus = async (
       updatedAt: true,
     },
   });
+
+  return createSuccessResult({
+    task: updatedTask,
+  });
 };
 
 export const updateChecklistItem = async (
@@ -246,11 +277,16 @@ export const updateChecklistItem = async (
   itemId: string,
   user: AuthUser,
   completed: boolean,
+  expectedVersion: number,
 ) => {
   const task = await userCanAccessTask(taskId, user);
 
   if (!task) {
-    return null;
+    return createNotFoundResult();
+  }
+
+  if (task.version !== expectedVersion) {
+    return createConflictResult(taskId, user);
   }
 
   const checklistItem = await prisma.checklistItem.findFirst({
@@ -264,7 +300,7 @@ export const updateChecklistItem = async (
   });
 
   if (!checklistItem) {
-    return null;
+    return createNotFoundResult();
   }
 
   const [updatedItem, updatedTask] = await prisma.$transaction([
@@ -298,17 +334,26 @@ export const updateChecklistItem = async (
     }),
   ]);
 
-  return {
+  return createSuccessResult({
     checklistItem: updatedItem,
     task: updatedTask,
-  };
+  });
 };
 
-export const createTaskNote = async (taskId: string, user: AuthUser, body: string) => {
+export const createTaskNote = async (
+  taskId: string,
+  user: AuthUser,
+  body: string,
+  expectedVersion: number,
+) => {
   const task = await userCanAccessTask(taskId, user);
 
   if (!task) {
-    return null;
+    return createNotFoundResult();
+  }
+
+  if (task.version !== expectedVersion) {
+    return createConflictResult(taskId, user);
   }
 
   const [note, updatedTask] = await prisma.$transaction([
@@ -350,8 +395,8 @@ export const createTaskNote = async (taskId: string, user: AuthUser, body: strin
     }),
   ]);
 
-  return {
+  return createSuccessResult({
     note,
     task: updatedTask,
-  };
+  });
 };

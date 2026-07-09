@@ -11,6 +11,49 @@ import {
 } from "./task.service.js";
 import type { TaskListQuery } from "./task.types.js";
 
+const getExpectedVersion = (value: unknown) => {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
+    return null;
+  }
+
+  return value;
+};
+
+const sendMutationResult = (
+  res: Response,
+  result:
+    | {
+        success: true;
+        data: unknown;
+      }
+    | {
+        notFound: true;
+      }
+    | {
+        conflict: true;
+        serverTask: unknown;
+      },
+  successStatus = 200,
+) => {
+  if ("notFound" in result) {
+    res.status(404).json({
+      message: "Task not found",
+    });
+    return;
+  }
+
+  if ("conflict" in result) {
+    res.status(409).json({
+      message: "Task has changed since this update was created",
+      code: "VERSION_CONFLICT",
+      serverTask: result.serverTask,
+    });
+    return;
+  }
+
+  res.status(successStatus).json(result.data);
+};
+
 export const listTasks = async (req: Request, res: Response) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim() : undefined;
   const statusParam = typeof req.query.status === "string" ? req.query.status : undefined;
@@ -108,8 +151,9 @@ export const updateTaskStatusController = async (req: Request, res: Response) =>
     return;
   }
 
-  const { status } = req.body as {
+  const { status, expectedVersion } = req.body as {
     status?: unknown;
+    expectedVersion?: unknown;
   };
 
   if (typeof status !== "string" || !isValidTaskStatus(status)) {
@@ -120,18 +164,18 @@ export const updateTaskStatusController = async (req: Request, res: Response) =>
     return;
   }
 
-  const updatedTask = await updateTaskStatus(taskId, req.user, status);
+  const parsedExpectedVersion = getExpectedVersion(expectedVersion);
 
-  if (!updatedTask) {
-    res.status(404).json({
-      message: "Task not found",
+  if (!parsedExpectedVersion) {
+    res.status(400).json({
+      message: "A valid expectedVersion is required",
     });
     return;
   }
 
-  res.json({
-    task: updatedTask,
-  });
+  const result = await updateTaskStatus(taskId, req.user, status, parsedExpectedVersion);
+
+  sendMutationResult(res, result);
 };
 
 export const updateChecklistItemController = async (req: Request, res: Response) => {
@@ -152,9 +196,19 @@ export const updateChecklistItemController = async (req: Request, res: Response)
     return;
   }
 
-  const { completed } = req.body as {
+  const { completed, expectedVersion } = req.body as {
     completed?: unknown;
+    expectedVersion?: unknown;
   };
+
+  const parsedExpectedVersion = getExpectedVersion(expectedVersion);
+
+  if (!parsedExpectedVersion) {
+    res.status(400).json({
+      message: "A valid expectedVersion is required",
+    });
+    return;
+  }
 
   if (typeof completed !== "boolean") {
     res.status(400).json({
@@ -163,16 +217,15 @@ export const updateChecklistItemController = async (req: Request, res: Response)
     return;
   }
 
-  const result = await updateChecklistItem(taskId, itemId, req.user, completed);
+  const result = await updateChecklistItem(
+    taskId,
+    itemId,
+    req.user,
+    completed,
+    parsedExpectedVersion,
+  );
 
-  if (!result) {
-    res.status(404).json({
-      message: "Task or checklist item not found",
-    });
-    return;
-  }
-
-  res.json(result);
+  sendMutationResult(res, result);
 };
 
 export const createTaskNoteController = async (req: Request, res: Response) => {
@@ -192,8 +245,9 @@ export const createTaskNoteController = async (req: Request, res: Response) => {
     return;
   }
 
-  const { body } = req.body as {
+  const { body, expectedVersion } = req.body as {
     body?: unknown;
+    expectedVersion?: unknown;
   };
 
   if (typeof body !== "string" || body.trim().length === 0) {
@@ -210,14 +264,15 @@ export const createTaskNoteController = async (req: Request, res: Response) => {
     return;
   }
 
-  const result = await createTaskNote(taskId, req.user, body.trim());
+  const parsedExpectedVersion = getExpectedVersion(expectedVersion);
 
-  if (!result) {
-    res.status(404).json({
-      message: "Task not found",
+  if (!parsedExpectedVersion) {
+    res.status(400).json({
+      message: "A valid expectedVersion is required",
     });
     return;
   }
 
-  res.status(201).json(result);
+  const result = await createTaskNote(taskId, req.user, body.trim(), parsedExpectedVersion);
+  sendMutationResult(res, result, 201);
 };

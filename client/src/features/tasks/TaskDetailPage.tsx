@@ -227,6 +227,7 @@ export function TaskDetailPage() {
                     payload: {
                       taskId,
                       status: selectedStatus,
+                      expectedVersion: task.version,
                     },
                   });
 
@@ -238,6 +239,7 @@ export function TaskDetailPage() {
                   {
                     taskId,
                     status: selectedStatus,
+                    expectedVersion: task.version,
                   },
                   {
                     onError: () => {
@@ -246,6 +248,7 @@ export function TaskDetailPage() {
                         payload: {
                           taskId,
                           status: selectedStatus,
+                          expectedVersion: task.version,
                         },
                       });
                       setDraftStatus(null);
@@ -313,6 +316,7 @@ export function TaskDetailPage() {
                             taskId,
                             itemId: item.id,
                             completed,
+                            expectedVersion: task.version,
                           },
                         });
 
@@ -324,6 +328,7 @@ export function TaskDetailPage() {
                           taskId,
                           itemId: item.id,
                           completed,
+                          expectedVersion: task.version,
                         },
                         {
                           onError: () => {
@@ -333,6 +338,7 @@ export function TaskDetailPage() {
                                 taskId,
                                 itemId: item.id,
                                 completed,
+                                expectedVersion: task.version,
                               },
                             });
                           },
@@ -400,6 +406,7 @@ export function TaskDetailPage() {
                   payload: {
                     taskId,
                     body,
+                    expectedVersion: task.version,
                   },
                 });
 
@@ -411,6 +418,7 @@ export function TaskDetailPage() {
                 {
                   taskId,
                   body,
+                  expectedVersion: task.version,
                 },
                 {
                   onError: () => {
@@ -419,6 +427,7 @@ export function TaskDetailPage() {
                       payload: {
                         taskId,
                         body,
+                        expectedVersion: task.version,
                       },
                     });
 
