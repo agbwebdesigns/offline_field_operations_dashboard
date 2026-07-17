@@ -44,11 +44,11 @@ jobs:
           node-version: 24
 
       - name: Install client dependencies
-        run: npm ci
+        run: npm install
         working-directory: client
 
       - name: Install server dependencies
-        run: npm ci
+        run: npm install
         working-directory: server
 
       - name: Generate Prisma client
