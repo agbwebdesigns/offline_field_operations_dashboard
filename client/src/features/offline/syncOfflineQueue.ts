@@ -1,18 +1,35 @@
 import { ApiError } from "../../shared/api/client";
 import { createTaskNote, updateChecklistItem, updateTaskStatus } from "../tasks/api";
+import type {
+  CreateTaskNoteInput,
+  UpdateChecklistItemInput,
+  UpdateTaskStatusInput,
+} from "../tasks/types";
 import { offlineQueueStorage } from "./offlineQueueStorage";
 import type { OfflineMutation } from "./offlineQueue.types";
 
-const replayMutation = async (mutation: OfflineMutation) => {
+type SyncApi = {
+  updateTaskStatus: (input: UpdateTaskStatusInput) => Promise<unknown>;
+  updateChecklistItem: (input: UpdateChecklistItemInput) => Promise<unknown>;
+  createTaskNote: (input: CreateTaskNoteInput) => Promise<unknown>;
+};
+
+const defaultSyncApi: SyncApi = {
+  updateTaskStatus,
+  updateChecklistItem,
+  createTaskNote,
+};
+
+const replayMutation = async (mutation: OfflineMutation, syncApi: SyncApi) => {
   if (mutation.type === "UPDATE_TASK_STATUS") {
-    return updateTaskStatus(mutation.payload);
+    return syncApi.updateTaskStatus(mutation.payload);
   }
 
   if (mutation.type === "UPDATE_CHECKLIST_ITEM") {
-    return updateChecklistItem(mutation.payload);
+    return syncApi.updateChecklistItem(mutation.payload);
   }
 
-  return createTaskNote(mutation.payload);
+  return syncApi.createTaskNote(mutation.payload);
 };
 
 export type SyncConflict = {
@@ -20,7 +37,7 @@ export type SyncConflict = {
   message: string;
 };
 
-export const syncOfflineQueue = async () => {
+export const syncOfflineQueue = async (syncApi = defaultSyncApi) => {
   const queue = offlineQueueStorage.getAll();
   const syncedMutationIds: string[] = [];
   const failedMutationIds: string[] = [];
@@ -28,7 +45,7 @@ export const syncOfflineQueue = async () => {
 
   for (const mutation of queue) {
     try {
-      await replayMutation(mutation);
+      await replayMutation(mutation, syncApi);
       syncedMutationIds.push(mutation.id);
       offlineQueueStorage.remove(mutation.id);
     } catch (error) {

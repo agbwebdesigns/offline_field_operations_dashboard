@@ -36,7 +36,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { pendingCount } = useOfflineQueue();
 
   const syncMutation = useMutation({
-    mutationFn: syncOfflineQueue,
+    mutationFn: () => syncOfflineQueue(),
     onSuccess: async (result) => {
       setLastConflictCount(result.conflictCount);
       await queryClient.invalidateQueries();
